@@ -1,0 +1,9 @@
+[workspace]
+resolver = "2"
+members = ["bootstrap",
+    "example",
+    "moonwalk"
+]
+
+[workspace.dependencies]
+moonwalk = { path = "./moonwalk" }

@@ -1,0 +1,11 @@
+[package]
+name = "moonwalk_bootstrap"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+winit = "0.30"
+glam = "0.24"
+log = "0.4"
+raw-window-handle = "0.6"
+moonwalk = { workspace = true }
