@@ -1,11 +1,16 @@
+pub mod error;
+mod rendering;
+
 use raw_window_handle::{HasDisplayHandle, HasWindowHandle};
 use glam::Vec4;
 use wgpu::SurfaceError;
+use easy_gpu::{Context, Buffer, PipelineBuilder, MatrixStack, RenderPass};
+use std::sync::Arc;
 
-pub mod error;
+use crate::rendering::renderer::MoonRenderer;
 
 pub struct MoonWalk {
-    test: bool,
+    renderer: MoonRenderer,
 }
 
 impl MoonWalk {
@@ -14,8 +19,21 @@ impl MoonWalk {
         width: u32,
         height: u32,
     ) -> Result<Self, error::MoonWalkError> {
+        let renderer_result = MoonRenderer::new(
+            window,
+            width,
+            height,
+        );
+
+        let renderer = match renderer_result {
+            Ok(r) => r,
+            Err(e) => {
+                return Err(e);
+            }
+        };
+
         Ok(Self {
-            test: true,
+            renderer,
         })
     }
 
