@@ -30,4 +30,9 @@ impl MoonRenderer {
             matrix_stack,
         })
     }
+
+    pub fn set_viewport(&mut self, width: u32, height: u32) {
+        self.context.resize(width, height);
+        self.matrix_stack.set_ortho(width as f32, height as f32);
+    }
 }

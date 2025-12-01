@@ -38,7 +38,7 @@ impl MoonWalk {
     }
 
     pub fn set_viewport(&mut self, width: u32, height: u32) {
-        
+        self.renderer.set_viewport(width, height);
     }
 
     pub fn render_frame(&mut self, clear_color: Vec4) -> Result<(), SurfaceError> {
