@@ -5,7 +5,8 @@ use std::sync::Arc;
 use crate::error::MoonWalkError;
 
 pub struct MoonRenderer {
-    context: Context
+    context: Context,
+    matrix_stack: MatrixStack,
 }
 
 impl MoonRenderer {
@@ -21,8 +22,12 @@ impl MoonRenderer {
             height,
         ));
 
+        let mut matrix_stack = MatrixStack::new();
+         matrix_stack.set_ortho(context.config.width as f32, context.config.height as f32);
+
         Ok(Self {
             context,
+            matrix_stack,
         })
     }
 }
