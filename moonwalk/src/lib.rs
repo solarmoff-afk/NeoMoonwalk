@@ -1,5 +1,6 @@
 pub mod error;
 mod rendering;
+mod objects;
 
 use raw_window_handle::{HasDisplayHandle, HasWindowHandle};
 use glam::Vec4;
