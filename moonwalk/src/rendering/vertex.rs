@@ -7,3 +7,10 @@ pub struct Vertex {
     pub rect_size: [f32; 2],
     pub radii: [f32; 4],
 }
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+pub struct PathVertex {
+    pub position: [f32; 3],
+    pub color: [f32; 4],
+}

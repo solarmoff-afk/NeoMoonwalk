@@ -38,7 +38,6 @@ impl MoonRenderer {
         let mut shader_store = ShaderStore::new(&context);
         shader_store.create_default_rect(&context, context.config.format)?;
         shader_store.create_default_text(&context, context.config.format)?;
-        shader_store.create_default_bezier(&context, context.config.format)?;
 
         let proj_bind_group = shader_store.get_proj_bind_group(&context, &uniform_buffer);
 

@@ -100,42 +100,6 @@ impl ShaderStore {
         Ok(id)
     }
 
-    pub fn create_default_bezier(&mut self, ctx: &Context, format: wgpu::TextureFormat) -> Result<ShaderId, MoonWalkError> {
-        let uniforms_layout = ctx.device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: Some("Bezier Uniforms Layout"),
-            entries: &[
-                wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    count: None,
-                },
-                wgpu::BindGroupLayoutEntry {
-                    binding: 1,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Storage { read_only: true },
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    count: None,
-                }
-            ]
-        });
-
-        let pipeline = PipelineBuilder::new(ctx, include_str!("../shaders/bezier.wgsl"))
-            .build(format, &[&uniforms_layout]);
-        
-        let id = ShaderId(3);
-        self.pipelines.insert(id, pipeline);
-        
-        Ok(id)
-    }
-
     pub fn compile_shader(&mut self, ctx: &Context, src: &str, format: wgpu::TextureFormat) -> Result<ShaderId, MoonWalkError> {
         let vertex_layout = wgpu::VertexBufferLayout {
             array_stride: std::mem::size_of::<[f32; 15]>() as wgpu::BufferAddress,
