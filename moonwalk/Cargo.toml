@@ -17,7 +17,7 @@ libc = "0.2"
 raw-window-handle = "0.6"
 wgpu = "24.0"
 easy-gpu = { git = "https://github.com/solarmoff-afk/easy-gpu" }
-textware = { git = "https://github.com/solarmoff-afk/textware" }
+# textware = { git = "https://github.com/solarmoff-afk/textware" }
 
 [target.'cfg(target_os = "android")'.dependencies]
 ndk = "0.8"

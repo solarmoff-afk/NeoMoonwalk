@@ -1,3 +1,6 @@
+// Часть проекта MoonWalk с открытым исходным кодом.
+// Лицензия EPL 2.0, подробнее в файле LICENSE. UpdateDeveloper, 2025
+
 use std::collections::HashMap;
 use easy_gpu::{Context, Pipeline, PipelineBuilder};
 use easy_gpu::matrix::MatrixUniform;
@@ -58,45 +61,36 @@ impl ShaderStore {
 
     pub fn create_default_rect(&mut self, ctx: &Context, format: wgpu::TextureFormat) -> Result<ShaderId, MoonWalkError> {
         let vertex_layout = wgpu::VertexBufferLayout {
-            array_stride: std::mem::size_of::<[f32; 15]>() as wgpu::BufferAddress,
+            array_stride: std::mem::size_of::<crate::rendering::vertex::QuadVertex>() as wgpu::BufferAddress,
             step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &wgpu::vertex_attr_array![
-                0 => Float32x3,
-                1 => Float32x4,
-                2 => Float32x2,
-                3 => Float32x2,
-                4 => Float32x4 
+            attributes: &[
+                // @location(0) position: vec2<f32>
+                wgpu::VertexAttribute { format: wgpu::VertexFormat::Float32x2, offset: 0, shader_location: 0 },
+            ],
+        };
+
+        let instance_layout = wgpu::VertexBufferLayout {
+            array_stride: std::mem::size_of::<crate::rendering::vertex::RectInstance>() as wgpu::BufferAddress,
+            step_mode: wgpu::VertexStepMode::Instance,
+            attributes: &[
+                // локация 1 Pos + Size (vec4)
+                wgpu::VertexAttribute { format: wgpu::VertexFormat::Float32x4, offset: 0,  shader_location: 1 },
+                // локация 2: Color (vec4)
+                wgpu::VertexAttribute { format: wgpu::VertexFormat::Float32x4, offset: 16, shader_location: 2 },
+                // локация 3: Radii (vec4)
+                wgpu::VertexAttribute { format: wgpu::VertexFormat::Float32x4, offset: 32, shader_location: 3 },
+                // локация 4: Extra (Z, Rotation, Padding, Padding) (vec4)
+                wgpu::VertexAttribute { format: wgpu::VertexFormat::Float32x4, offset: 48, shader_location: 4 },
             ],
         };
 
         let pipeline = PipelineBuilder::new(ctx, include_str!("../shaders/rect.wgsl"))
             .add_layout(vertex_layout)
+            .add_layout(instance_layout)
             .build(format, &[&self.proj_layout]);
 
         let id = ShaderId(1);
         self.pipelines.insert(id, pipeline);
-        
-        Ok(id)
-    }
-
-    pub fn create_default_text(&mut self, ctx: &Context, format: wgpu::TextureFormat) -> Result<ShaderId, MoonWalkError> {
-        let vertex_layout = wgpu::VertexBufferLayout {
-            array_stride: 36,
-            step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &[
-                wgpu::VertexAttribute { format: wgpu::VertexFormat::Float32x3, offset: 0, shader_location: 0 },
-                wgpu::VertexAttribute { format: wgpu::VertexFormat::Float32x4, offset: 20, shader_location: 1 },
-                wgpu::VertexAttribute { format: wgpu::VertexFormat::Float32x2, offset: 12, shader_location: 2 },
-            ],
-        };
-
-        let pipeline = PipelineBuilder::new(ctx, include_str!("../shaders/text.wgsl"))
-            .add_layout(vertex_layout)
-            .build(format, &[&self.proj_layout, &self.glyph_layout]);
-
-        let id = ShaderId(2);
-        self.pipelines.insert(id, pipeline);
-        
         Ok(id)
     }
 
@@ -127,12 +121,12 @@ impl ShaderStore {
         self.pipelines.get(&id)
     }
 
-    pub fn get_proj_bind_group(&self, ctx: &Context, buffer: &easy_gpu::Buffer<MatrixUniform>) -> wgpu::BindGroup {
+    pub fn get_proj_bind_group(&self, ctx: &Context, buffer: &wgpu::Buffer) -> wgpu::BindGroup {
         ctx.device.create_bind_group(&wgpu::BindGroupDescriptor {
             layout: &self.proj_layout,
             entries: &[wgpu::BindGroupEntry {
                 binding: 0,
-                resource: buffer.raw.as_entire_binding(),
+                resource: buffer.as_entire_binding(),
             }],
             label: Some("Projection Bind Group"),
         })

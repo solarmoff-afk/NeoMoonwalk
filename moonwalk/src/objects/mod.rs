@@ -1,117 +1,45 @@
-use glam::{Vec2, Vec3, Vec4, Mat4};
-use rustc_hash::FxHasher;
-use std::hash::{Hash, Hasher};
-use std::collections::HashMap;
+// Часть проекта MoonWalk с открытым исходным кодом.
+// Лицензия EPL 2.0, подробнее в файле LICENSE. UpdateDeveloper, 2025
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
-pub struct ObjectId(pub u32);
+pub mod store;
 
-impl From<u32> for ObjectId {
-    fn from(id: u32) -> Self {
-        Self(id)
-    }
-}
+/// Айди объекта
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ObjectId(pub usize);
 
-impl ObjectId {
-    pub fn to_u32(self) -> u32 {
-        self.0
-    }
-}
-
+/// Айди шейдера
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct ShaderId(pub u32);
 
-impl From<u32> for ShaderId {
-    fn from(id: u32) -> Self {
-        Self(id)
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ObjectType {
+    Rect = 1,
+}
+
+impl ObjectId {
+    // Хардкод
+    const INDEX_MASK: usize = 0x00FF_FFFF;
+    const TYPE_SHIFT: usize = 24;
+
+    #[inline(always)]
+    pub fn new(ty: ObjectType, index: usize) -> Self {
+        let ty_val = (ty as usize) << Self::TYPE_SHIFT;
+        let idx_val = index & Self::INDEX_MASK;
+        Self(ty_val | idx_val)
     }
-}
 
-impl ShaderId {
-    pub fn to_u32(self) -> u32 {
-        self.0
-    }
-}
-
-#[derive(Clone)]
-pub enum UniformValue {
-    Int(i32),
-    Float(f32),
-    Vec2(Vec2),
-    Vec3(Vec3),
-    Vec4(Vec4),
-    Mat4(Mat4),
-    Bool(bool),
-}
-
-#[derive(Clone, Default)]
-pub struct Common {
-    pub position: Vec2,
-    pub size: Vec2,
-    pub rotation: f32,
-    pub color: Vec4,
-    pub z: f32,
-    pub shader: ShaderId,
-    pub uniforms: HashMap<String, UniformValue>
-}
-
-#[derive(Clone, Default)]
-pub struct RectData {
-    pub radii: Vec4,
-}
-
-pub enum Variant {
-    Rect(RectData),
-    // Text(TextData),
-}
-
-pub struct Object {
-    pub id: ObjectId,
-    pub common: Common,
-    pub variant: Variant,
-}
-
-pub fn hash_uniforms(uniforms: &HashMap<String, UniformValue>) -> u64 {
-    let mut hasher = FxHasher::default();
-    let mut keys: Vec<&String> = uniforms.keys().collect();
-
-    keys.sort();
-
-    for key in keys {
-        key.hash(&mut hasher);
-
-        match &uniforms[key] {
-            UniformValue::Int(v) => v.hash(&mut hasher),
-            
-            UniformValue::Float(v) => v.to_bits().hash(&mut hasher),
-            
-            UniformValue::Vec2(v) => {
-                v.x.to_bits().hash(&mut hasher);
-                v.y.to_bits().hash(&mut hasher);
-            }
-            
-            UniformValue::Vec3(v) => {
-                v.x.to_bits().hash(&mut hasher);
-                v.y.to_bits().hash(&mut hasher);
-                v.z.to_bits().hash(&mut hasher);
-            }
-            
-            UniformValue::Vec4(v) => {
-                v.x.to_bits().hash(&mut hasher);
-                v.y.to_bits().hash(&mut hasher);
-                v.z.to_bits().hash(&mut hasher);
-                v.w.to_bits().hash(&mut hasher);
-            }
-            
-            UniformValue::Mat4(v) => {
-                for f in v.to_cols_array() {
-                    f.to_bits().hash(&mut hasher);
-                }
-            }
-
-            UniformValue::Bool(v) => v.hash(&mut hasher),
+    #[inline(always)]
+    pub fn get_type(&self) -> ObjectType {
+        // Кастим обратно в u8 для std::mem::transmute
+        let ty_val = ((self.0 >> Self::TYPE_SHIFT) & 0xFF) as u8;
+        unsafe {
+            std::mem::transmute(ty_val)
         }
     }
 
-    hasher.finish()
+    #[inline(always)]
+    pub fn index(&self) -> usize {
+        self.0 & Self::INDEX_MASK
+    }
 }

@@ -10,6 +10,12 @@ use winit::{
     dpi::LogicalSize,
 };
 
+#[cfg(target_os = "android")]
+use winit::platform::android::EventLoopBuilderExtAndroid;
+
+#[cfg(target_os = "android")]
+use android_activity::AndroidApp;
+
 use crate::app::Application;
 use crate::window::WindowSettings;
 
@@ -115,8 +121,28 @@ impl<A: Application> ApplicationHandler for AppRunner<A> {
 pub struct Runner;
 
 impl Runner {
+    #[cfg(not(target_os = "android"))]
     pub fn run<A: Application + 'static>(app: A, settings: WindowSettings) -> Result<(), Box<dyn std::error::Error>> {
         let event_loop = EventLoop::new()?;
+        event_loop.set_control_flow(ControlFlow::Poll);
+
+        let mut runner = AppRunner {
+            app,
+            settings,
+            state: None,
+        };
+
+        event_loop.run_app(&mut runner)?;
+
+        Ok(())
+    }
+
+    #[cfg(target_os = "android")]
+    pub fn run<A: Application + 'static>(app: A, settings: WindowSettings, android_app: AndroidApp) -> Result<(), Box<dyn std::error::Error>> {
+        let event_loop = EventLoop::builder()
+            .with_android_app(android_app)
+            .build()?;
+            
         event_loop.set_control_flow(ControlFlow::Poll);
 
         let mut runner = AppRunner {

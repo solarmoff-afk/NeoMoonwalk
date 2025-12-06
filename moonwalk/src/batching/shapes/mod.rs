@@ -1,7 +1,4 @@
 // Часть проекта MoonWalk с открытым исходным кодом.
 // Лицензия EPL 2.0, подробнее в файле LICENSE. UpdateDeveloper, 2025
 
-pub mod state;
-pub mod renderer;
-pub mod vertex;
-pub mod pipeline;
+pub mod rect;

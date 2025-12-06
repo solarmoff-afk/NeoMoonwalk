@@ -1,66 +1,95 @@
+// Часть проекта MoonWalk с открытым исходным кодом.
+// Лицензия EPL 2.0, подробнее в файле LICENSE. UpdateDeveloper, 2025
+
+struct Uniforms {
+    view_proj: mat4x4<f32>,
+};
+@group(0) @binding(0) var<uniform> ubo: Uniforms;
+
 struct VertexInput {
-    @location(0) position: vec3<f32>,
-    @location(1) color: vec4<f32>,
-    @location(2) local_pos: vec2<f32>,
-    @location(3) rect_size: vec2<f32>,
-    @location(4) radii: vec4<f32>,
+    @location(0) position: vec2<f32>,
+};
+
+struct InstanceInput {
+    @location(1) pos_size: vec4<f32>, // xy = pos, zw = size
+    @location(2) color: vec4<f32>,
+    @location(3) radii: vec4<f32>,
+    @location(4) extra: vec4<f32>,    // x = z, y = rotation
 };
 
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
     @location(0) color: vec4<f32>,
     @location(1) local_pos: vec2<f32>,
-    @location(2) rect_size: vec2<f32>,
+    @location(2) size: vec2<f32>,
     @location(3) radii: vec4<f32>,
 };
 
-@group(0) @binding(0)
-var<uniform> projection: mat4x4<f32>;
-
 @vertex
-fn vs_rect_main(model: VertexInput) -> VertexOutput {
+fn vs_main(in: VertexInput, instance: InstanceInput) -> VertexOutput {
     var out: VertexOutput;
-    out.clip_position = projection * vec4<f32>(model.position, 1.0);
-    out.color = model.color;
-    out.local_pos = model.local_pos;
-    out.rect_size = model.rect_size;
-    out.radii = model.radii;
+
+    // Распаковка
+    let pos = instance.pos_size.xy;
+    let size = instance.pos_size.zw;
+    let z_index = instance.extra.x;
+    let rotation = instance.extra.y;
+
+    // 1. Scale / Center
+    let center_offset = size * 0.5;
+    let local_unrotated = (in.position * size) - center_offset;
+
+    // 2. Rotate
+    let c = cos(rotation);
+    let s = sin(rotation);
+    let rotated_x = local_unrotated.x * c - local_unrotated.y * s;
+    let rotated_y = local_unrotated.x * s + local_unrotated.y * c;
+    
+    // 3. Translate
+    let final_x = rotated_x + center_offset.x + pos.x;
+    let final_y = rotated_y + center_offset.y + pos.y;
+
+    out.clip_position = ubo.view_proj * vec4<f32>(final_x, final_y, z_index, 1.0);
+    
+    out.color = instance.color;
+    out.radii = instance.radii;
+    out.size = size;
+    out.local_pos = in.position * size;
+
     return out;
 }
 
-fn sd_rounded_box(p: vec2<f32>, b: vec2<f32>, r_in: vec4<f32>) -> f32 {
-    var r = r_in;
+// Стандартная функция SDF для скругленного бокса (IQ)
+fn sd_rounded_box(p: vec2<f32>, b: vec2<f32>, r: vec4<f32>) -> f32 {
+    // Выбор радиуса в зависимости от квадранта
+    var radius = r.x; // TL
     if (p.x > 0.0) {
-        r.x = r.x;
-        r.y = r.y;
+        if (p.y > 0.0) { radius = r.z; } // BR
+        else { radius = r.y; }           // TR
     } else {
-        r.x = r.w;
-        r.y = r.z;
-    }
-    if (p.y > 0.0) {
-        r.x = r.x;
-    } else {
-        r.x = r.y;
+        if (p.y > 0.0) { radius = r.w; } // BL
+        // else TL
     }
     
-    let q = abs(p) - b + r.x;
-    return min(max(q.x, q.y), 0.0) + length(max(q, vec2<f32>(0.0))) - r.x;
+    // Внимание: p здесь должно быть относительно центра!
+    let q = abs(p) - b + radius;
+    return min(max(q.x, q.y), 0.0) + length(max(q, vec2<f32>(0.0))) - radius;
 }
 
 @fragment
-fn fs_rect_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    let half_size = in.rect_size * 0.5;
+fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+    let half_size = in.size * 0.5;
     let p = in.local_pos - half_size;
 
-    let min_half_dim = min(half_size.x, half_size.y);
-    let clamped_radii = min(in.radii, vec4<f32>(min_half_dim));
+    let min_half = min(half_size.x, half_size.y);
+    let r = min(in.radii, vec4<f32>(min_half));
 
-    let dist = sd_rounded_box(p, half_size - vec2(1.0, 1.0), clamped_radii);
+    let dist = sd_rounded_box(p, half_size, r);
     
-    let screen_pixel = fwidth(dist);
-    let alpha = clamp(0.5 - dist / screen_pixel, 0.0, 1.0);
-    
-    if (alpha < 0.01) {
+    // Используем dpdx / dpdy вместо ddx / ddy
+    let alpha = 1.0 - smoothstep(-0.5, 0.5, dist / length(vec2<f32>(dpdx(dist), dpdy(dist))));
+
+    if (alpha <= 0.0) {
         discard;
     }
 

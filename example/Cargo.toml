@@ -3,8 +3,18 @@ name = "example"
 version = "0.1.0"
 edition = "2024"
 
-[dependencies]
+[target.'cfg(target_os = "android")'.lib]
+crate-type = ["cdylib"]
+name = "app"
+path = "src/main.rs"
 
+[dependencies]
 glam = { version = "0.24", features = ["scalar-math", "bytemuck"] }
 moonwalk_bootstrap = { path = "../bootstrap" }
 moonwalk = { workspace = true }
+
+[target.'cfg(target_os = "android")'.dependencies]
+android_logger = "0.13"
+log = "0.4"
+winit = { version = "0.30", features = ["android-native-activity"] }
+android-activity = { version = "0.6", features = ["native-activity"] }
