@@ -60,10 +60,13 @@ impl RectBatch {
             });
         }
         
-        // Сортировка объектов по Z идексу 
-        self.cpu_instances.sort_unstable_by(|a, b| {
-            a.extra[0].total_cmp(&b.extra[0])
-        });
+        // Сортировка объектов по Z идексу толкьо если Z индексы
+        // грязные (Проверяем флаг в хранилище объектов) 
+        if store.z_dirty { 
+            self.cpu_instances.sort_unstable_by(|a, b| {
+                a.extra[0].total_cmp(&b.extra[0])
+            });
+        }
 
         if self.cpu_instances.is_empty() {
             return;

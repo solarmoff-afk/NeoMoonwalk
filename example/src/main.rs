@@ -1,6 +1,6 @@
 use moonwalk::{MoonWalk, ObjectId};
 use moonwalk_bootstrap::{Application, Runner, WindowSettings};
-use glam::{Vec2, Vec3, Vec4};
+use glam::{Vec2, Vec4};
 
 #[cfg(target_os = "android")]
 use log::LevelFilter;
@@ -39,12 +39,6 @@ impl StressApp {
 impl Application for StressApp {
     fn on_start(&mut self, mw: &mut MoonWalk, viewport: Vec2) {
         self.screen_size = viewport;
-        
-        let bg = mw.new_rect();
-        mw.config_position(bg, Vec2::ZERO);
-        mw.config_size(bg, viewport * 2.0);
-        mw.config_color(bg, Vec4::new(0.02, 0.02, 0.05, 1.0));
-        mw.set_z_index(bg, 0.0);
 
         println!("Spawning {} rects...", RECT_COUNT);
 

@@ -22,6 +22,14 @@ pub struct ObjectStore {
     pub rect_radii: Vec<Vec4>,
 
     pub dirty: bool,
+
+    // Оптимизация: Сортировка каждую пересборку батча явлется
+    // достаточно узким местом. Мы теряем ~2-3 fps при 100
+    // тысячах объектов. Поэтому тут используется отдельный флаг
+    // z_dirty который устаналивается при изменении z идекса
+    // и только тогда вызывает сортировку в prepare функции
+    // прямоугольника (И других объектов в будущем)
+    pub z_dirty: bool,
 }
 
 impl ObjectStore {
@@ -38,6 +46,7 @@ impl ObjectStore {
 
             // Объекты изначально не грязные потому-что их нет
             dirty: false,
+            z_dirty: false,
         }
     }
 
@@ -52,7 +61,8 @@ impl ObjectStore {
         
         // После создания объекта нам нужно пересобрать всё, поэтому
         // делаем хранилище грязным
-        self.dirty = true; 
+        self.dirty = true;
+        self.z_dirty = true;
 
         index
     }
@@ -101,6 +111,7 @@ impl ObjectStore {
     pub fn config_z_index(&mut self, id: ObjectId, z: f32) {
         self.z_indices[id.index()] = z;
         self.dirty = true;
+        self.z_dirty = true;
     }
 
     pub fn set_rounded(&mut self, id: ObjectId, radii: Vec4) {

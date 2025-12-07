@@ -5,7 +5,6 @@ use easy_gpu::Context;
 
 use crate::batching::shapes::rect::RectBatch;
 use crate::objects::store::ObjectStore;
-use crate::batching::submiter::Submiter;
 
 pub struct BatchGroup {
     pub rects: RectBatch,

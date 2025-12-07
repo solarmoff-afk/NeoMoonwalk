@@ -3,7 +3,6 @@
 
 use std::collections::HashMap;
 use easy_gpu::{Context, Pipeline, PipelineBuilder};
-use easy_gpu::matrix::MatrixUniform;
 
 use crate::objects::ShaderId;
 use crate::error::MoonWalkError;
@@ -11,7 +10,7 @@ use crate::error::MoonWalkError;
 pub struct ShaderStore {
     pipelines: HashMap<ShaderId, Pipeline>,
     pub proj_layout: wgpu::BindGroupLayout,
-    pub glyph_layout: wgpu::BindGroupLayout,
+    // pub glyph_layout: wgpu::BindGroupLayout,
 }
 
 impl ShaderStore {
@@ -30,32 +29,32 @@ impl ShaderStore {
             }],
         });
 
-        let glyph_layout = ctx.device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: Some("Glyph Layout"),
-            entries: &[
-                wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Texture {
-                        multisampled: false,
-                        view_dimension: wgpu::TextureViewDimension::D2,
-                        sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                    },
-                    count: None,
-                },
-                wgpu::BindGroupLayoutEntry {
-                    binding: 1,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                    count: None,
-                },
-            ],
-        });
+        // let glyph_layout = ctx.device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        //     label: Some("Glyph Layout"),
+        //     entries: &[
+        //         wgpu::BindGroupLayoutEntry {
+        //             binding: 0,
+        //             visibility: wgpu::ShaderStages::FRAGMENT,
+        //             ty: wgpu::BindingType::Texture {
+        //                 multisampled: false,
+        //                 view_dimension: wgpu::TextureViewDimension::D2,
+        //                 sample_type: wgpu::TextureSampleType::Float { filterable: true },
+        //             },
+        //             count: None,
+        //         },
+        //         wgpu::BindGroupLayoutEntry {
+        //             binding: 1,
+        //             visibility: wgpu::ShaderStages::FRAGMENT,
+        //             ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+        //             count: None,
+        //         },
+        //     ],
+        // });
 
         Self {
             pipelines: HashMap::new(),
             proj_layout,
-            glyph_layout,
+            // glyph_layout,
         }
     }
 
