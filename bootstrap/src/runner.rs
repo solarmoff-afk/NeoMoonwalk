@@ -105,6 +105,10 @@ impl<A: Application> ApplicationHandler for AppRunner<A> {
                 self.app.on_resize(&mut state.moonwalk, Vec2::new(logical.width, logical.height));
             },
 
+            WindowEvent::ScaleFactorChanged { scale_factor, .. } => {
+                state.moonwalk.set_scale_factor(scale_factor as f32);
+            },
+
             WindowEvent::RedrawRequested => {
                 state.window.request_redraw();
 
