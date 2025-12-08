@@ -11,10 +11,10 @@ struct VertexInput {
 };
 
 struct InstanceInput {
-    @location(1) pos_size: vec4<f32>, // xy = pos, zw = size
-    @location(2) color: vec4<f32>,
-    @location(3) radii: vec4<f32>,
-    @location(4) extra: vec4<f32>,    // x = z, y = rotation
+    @location(1) pos_size: vec4<f32>,
+    @location(2) radii: vec4<f32>,
+    @location(3) extra: vec2<f32>,
+    @location(4) color_packed: u32,
 };
 
 struct VertexOutput {
@@ -29,29 +29,24 @@ struct VertexOutput {
 fn vs_main(in: VertexInput, instance: InstanceInput) -> VertexOutput {
     var out: VertexOutput;
 
-    // Распаковка
     let pos = instance.pos_size.xy;
     let size = instance.pos_size.zw;
     let z_index = instance.extra.x;
     let rotation = instance.extra.y;
 
-    // 1. Scale / Center
     let center_offset = size * 0.5;
     let local_unrotated = (in.position * size) - center_offset;
 
-    // 2. Rotate
     let c = cos(rotation);
     let s = sin(rotation);
     let rotated_x = local_unrotated.x * c - local_unrotated.y * s;
     let rotated_y = local_unrotated.x * s + local_unrotated.y * c;
     
-    // 3. Translate
     let final_x = rotated_x + center_offset.x + pos.x;
     let final_y = rotated_y + center_offset.y + pos.y;
 
     out.clip_position = ubo.view_proj * vec4<f32>(final_x, final_y, z_index, 1.0);
-    
-    out.color = instance.color;
+    out.color = unpack4x8unorm(instance.color_packed);
     out.radii = instance.radii;
     out.size = size;
     out.local_pos = in.position * size;
@@ -59,19 +54,20 @@ fn vs_main(in: VertexInput, instance: InstanceInput) -> VertexOutput {
     return out;
 }
 
-// Стандартная функция SDF для скругленного бокса (IQ)
 fn sd_rounded_box(p: vec2<f32>, b: vec2<f32>, r: vec4<f32>) -> f32 {
-    // Выбор радиуса в зависимости от квадранта
     var radius = r.x; // TL
     if (p.x > 0.0) {
-        if (p.y > 0.0) { radius = r.z; } // BR
-        else { radius = r.y; }           // TR
+        if (p.y > 0.0) {
+            radius = r.z;
+        } else {
+            radius = r.y;
+        }
     } else {
-        if (p.y > 0.0) { radius = r.w; } // BL
-        // else TL
+        if (p.y > 0.0) {
+            radius = r.w;
+        }
     }
     
-    // Внимание: p здесь должно быть относительно центра!
     let q = abs(p) - b + radius;
     return min(max(q.x, q.y), 0.0) + length(max(q, vec2<f32>(0.0))) - radius;
 }
@@ -86,7 +82,6 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 
     let dist = sd_rounded_box(p, half_size, r);
     
-    // Используем dpdx / dpdy вместо ddx / ddy
     let alpha = 1.0 - smoothstep(-0.5, 0.5, dist / length(vec2<f32>(dpdx(dist), dpdy(dist))));
 
     if (alpha <= 0.0) {

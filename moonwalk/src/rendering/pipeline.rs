@@ -72,14 +72,36 @@ impl ShaderStore {
             array_stride: std::mem::size_of::<crate::rendering::vertex::RectInstance>() as wgpu::BufferAddress,
             step_mode: wgpu::VertexStepMode::Instance,
             attributes: &[
-                // локация 1 Pos + Size (vec4)
-                wgpu::VertexAttribute { format: wgpu::VertexFormat::Float32x4, offset: 0,  shader_location: 1 },
-                // локация 2: Color (vec4)
-                wgpu::VertexAttribute { format: wgpu::VertexFormat::Float32x4, offset: 16, shader_location: 2 },
-                // локация 3: Radii (vec4)
-                wgpu::VertexAttribute { format: wgpu::VertexFormat::Float32x4, offset: 32, shader_location: 3 },
-                // локация 4: Extra (Z, Rotation, Padding, Padding) (vec4)
-                wgpu::VertexAttribute { format: wgpu::VertexFormat::Float32x4, offset: 48, shader_location: 4 },
+                // Pos + ыize (vec4<f32>) 16 байт
+                wgpu::VertexAttribute { 
+                    format: wgpu::VertexFormat::Float32x4, 
+                    offset: 0,  
+                    shader_location: 1 
+                },
+
+                // Radii (vec4<f32>) 16 байт
+                // Смещение 16
+                wgpu::VertexAttribute { 
+                    format: wgpu::VertexFormat::Float32x4, 
+                    offset: 16, 
+                    shader_location: 2 
+                },
+                
+                // Extra: Z + Rot (vec2<f32>) 8 байт
+                // Смещение 16 + 16 = 32
+                wgpu::VertexAttribute { 
+                    format: wgpu::VertexFormat::Float32x2,
+                    offset: 32, 
+                    shader_location: 3 
+                },
+                
+                // Color (u32) 4 байта
+                // Смещение 32 + 8 = 40
+                wgpu::VertexAttribute { 
+                    format: wgpu::VertexFormat::Uint32,
+                    offset: 40, 
+                    shader_location: 4 
+                },
             ],
         };
 

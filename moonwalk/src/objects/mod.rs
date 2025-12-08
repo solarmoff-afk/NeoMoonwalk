@@ -17,6 +17,15 @@ pub enum ObjectType {
     Rect = 1,
 }
 
+impl ObjectType {
+    pub fn from_u8(v: u8) -> Option<Self> {
+        match v {
+            1 => Some(Self::Rect),
+            _ => None,
+        }
+    }
+}
+
 impl ObjectId {
     // Хардкод
     const INDEX_MASK: usize = 0x00FF_FFFF;
@@ -30,12 +39,9 @@ impl ObjectId {
     }
 
     #[inline(always)]
-    pub fn get_type(&self) -> ObjectType {
-        // Кастим обратно в u8 для std::mem::transmute
+    pub fn get_type(&self) -> Option<ObjectType> { // Возвращаем Option
         let ty_val = ((self.0 >> Self::TYPE_SHIFT) & 0xFF) as u8;
-        unsafe {
-            std::mem::transmute(ty_val)
-        }
+        ObjectType::from_u8(ty_val)
     }
 
     #[inline(always)]

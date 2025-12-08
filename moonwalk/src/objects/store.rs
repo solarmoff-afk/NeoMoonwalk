@@ -70,15 +70,13 @@ impl ObjectStore {
 
     pub fn new_rect(&mut self) -> ObjectId {
         // Делаем аллокацию
-        let id = self.alloc_common();
+        let index = self.alloc_common();
+        let id = objects::ObjectId::new(objects::ObjectType::Rect, index);
 
         // Добавляем прямоугольник
-        self.rect_ids.push(objects::ObjectId(id));
+        self.rect_ids.push(id);
         
-        // Нулевое скруглением углов
-        self.rect_ids.push(objects::ObjectId(id));
-        
-        objects::ObjectId(id)
+        id
     }
 
     /// Каждая функция конфигурации должна делать хранилище объектов

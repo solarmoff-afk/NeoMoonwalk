@@ -46,17 +46,15 @@ impl RectBatch {
                     store.sizes[idx].y,
                 ],
 
-                color: store.colors[idx].to_array(),
-                
                 radii: store.rect_radii[idx].to_array(),
-                
-                // Упаковываем z индекс, вращение и отсупы
+
+                // Упаковываем z индекс и вращение
                 extra: [
                     store.z_indices[idx],
                     store.rotations[idx],
-                    0.0, // Padding
-                    0.0  // Padding
                 ],
+
+                color: RectInstance::pack_color(store.colors[idx].to_array()),
             });
         }
         
