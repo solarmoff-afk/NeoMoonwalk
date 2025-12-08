@@ -15,6 +15,7 @@ use crate::objects::ObjectId;
 pub struct MoonRenderer {
     pub context: Context,
     pub state: RenderState,
+    pub scale_factor: f32,
 }
 
 impl MoonRenderer {
@@ -39,17 +40,34 @@ impl MoonRenderer {
         Ok(Self {
             context, // Контекст easy_gpu/wgpu
             state,   // Состояние рендерера
+            scale_factor: 1.0,
         })
+    }
+
+    /// Обновляет DPI и пересчитывает проекцию
+    pub fn set_scale_factor(&mut self, scale: f32) {
+        self.scale_factor = scale;
+        
+        // Принудительно вызываем resize с текущими физическими размерами, 
+        // чтобы пересчитать логическую матрицу
+        let width = self.context.config.width;
+        let height = self.context.config.height;
+        
+        self.resize(width, height);
     }
 
     /// Функция изменения размера холста для рисования,
     /// нужно передать только новую ширину и высоту
-    pub fn resize(&mut self, width: u32, height: u32) {
+     pub fn resize(&mut self, width: u32, height: u32) {
         // Проверяем что ширина и высота НЕ НОЛЬ, иначе возможны
         // проблемы (Например, паника)
         if width > 0 && height > 0 {
             self.context.resize(width, height);
-            self.state.update_projection(&self.context, width, height);
+            
+            let logical_w = width as f32 / self.scale_factor;
+            let logical_h = height as f32 / self.scale_factor;
+
+            self.state.update_projection(&self.context, logical_w, logical_h);
         }
     }
 
@@ -70,6 +88,38 @@ impl MoonRenderer {
 
         frame.present();
         Ok(())
+    }
+
+    /// На android после перезахода в приложение Surface (Хотс куда идёт рендер)
+    /// удаляется (После выхода). Нам нужно пересоздавать его после повторного
+    /// входа в приложение на android. Эта функция как раз пересоздаёт холст
+    pub fn recreate_surface(
+        &mut self,
+        window: &'static (impl HasWindowHandle + HasDisplayHandle + Send + Sync),
+        width: u32, height: u32
+    ) {
+        let window = Arc::new(window);
+        
+        // Создаём новый холст
+        let new_surface = self.context.instance.create_surface(window)
+            .expect("Failed to recreate surface");
+        
+        let config = self.context.surface.as_ref()
+            .map(|_| self.context.config.clone()) 
+            .unwrap_or_else(|| {
+                new_surface.get_default_config(
+                    &self.context.adapter,
+                    width,
+                    height
+                ).expect("Surface not supported")
+            });
+
+        // Применяем конфиг к устройству
+        new_surface.configure(&self.context.device, &config);
+
+        // Подменяем поверхность в контексте
+        self.context.surface = Some(std::sync::Arc::new(new_surface));
+        self.context.config = config;
     }
 
     #[inline]

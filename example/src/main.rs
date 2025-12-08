@@ -5,9 +5,9 @@ use glam::{Vec2, Vec4};
 #[cfg(target_os = "android")]
 use log::LevelFilter;
 
-const RECT_COUNT: usize = 100_000;
-const RECT_SIZE: f32 = 1.0;
-const SPEED_BASE: f32 = 200.0;
+const RECT_COUNT: usize = 5_000; 
+const RECT_SIZE: f32 = 32.0;
+const SPEED_BASE: f32 = 150.0;
 
 struct Bouncer {
     id: ObjectId,
@@ -39,8 +39,15 @@ impl StressApp {
 impl Application for StressApp {
     fn on_start(&mut self, mw: &mut MoonWalk, viewport: Vec2) {
         self.screen_size = viewport;
+        
+        #[cfg(target_os = "android")]
+        log::info!("MoonWalk Start. Viewport: {:?}", viewport);
 
-        println!("Spawning {} rects...", RECT_COUNT);
+        let bg = mw.new_rect();
+        mw.set_position(bg, Vec2::ZERO);
+        mw.set_size(bg, viewport * 2.0);
+        mw.set_color(bg, Vec4::new(0.0, 0.0, 0.0, 1.0));
+        mw.set_z_index(bg, 0.0);
 
         for i in 0..RECT_COUNT {
             let id = mw.new_rect();
@@ -48,7 +55,7 @@ impl Application for StressApp {
             let r = Self::pseudo_rand(i, 1.0);
             let g = Self::pseudo_rand(i, 2.0);
             let b = Self::pseudo_rand(i, 3.0);
-            
+
             let start_x = Self::pseudo_rand(i, 4.0) * (viewport.x - RECT_SIZE);
             let start_y = Self::pseudo_rand(i, 5.0) * (viewport.y - RECT_SIZE);
             
@@ -56,12 +63,12 @@ impl Application for StressApp {
             let vel_y = (Self::pseudo_rand(i, 7.0) - 0.5) * 2.0 * SPEED_BASE;
 
             let color = Vec4::new(r, g, b, 1.0);
-            let size = Vec2::splat(RECT_SIZE + Self::pseudo_rand(i, 8.0) * 10.0); // 20..30px
+            let size = Vec2::splat(RECT_SIZE + Self::pseudo_rand(i, 8.0) * 15.0);
 
-            mw.config_position(id, Vec2::new(start_x, start_y));
-            mw.config_size(id, size);
-            mw.config_color(id, color);
-            mw.set_rounded(id, Vec4::splat(5.0)); // Небольшое скругление
+            mw.set_position(id, Vec2::new(start_x, start_y));
+            mw.set_size(id, size);
+            mw.set_color(id, color);
+            mw.set_rounded(id, Vec4::splat(8.0));
             mw.set_z_index(id, 0.1 + (i as f32 / RECT_COUNT as f32)); 
 
             self.bouncers.push(Bouncer {
@@ -83,39 +90,28 @@ impl Application for StressApp {
             b.pos += b.vel * dt;
             b.angle += b.rot_speed * dt;
 
-            let mut hit = false;
-            
             if b.pos.x < 0.0 {
                 b.pos.x = 0.0;
                 b.vel.x = b.vel.x.abs();
-                hit = true;
-            } else if b.pos.x + RECT_SIZE > w {
-                b.pos.x = w - RECT_SIZE;
+            } else if b.pos.x > w {
+                b.pos.x = w;
                 b.vel.x = -b.vel.x.abs();
-                hit = true;
             }
 
             if b.pos.y < 0.0 {
                 b.pos.y = 0.0;
                 b.vel.y = b.vel.y.abs();
-                hit = true;
-            } else if b.pos.y + RECT_SIZE > h {
-                b.pos.y = h - RECT_SIZE;
+            } else if b.pos.y > h {
+                b.pos.y = h;
                 b.vel.y = -b.vel.y.abs();
-                hit = true;
-            }
-
-            if hit {
-                b.color = Vec4::new(b.color.y, b.color.z, b.color.x, 1.0); // Swizzle
             }
         }
     }
 
     fn on_draw(&mut self, mw: &mut MoonWalk) {
         for b in &self.bouncers {
-            mw.config_position(b.id, b.pos);
-            mw.config_rotation(b.id, b.angle);
-            mw.config_color(b.id, b.color);
+            mw.set_position(b.id, b.pos);
+            mw.set_rotation(b.id, b.angle);
         }
     }
 
@@ -127,11 +123,8 @@ impl Application for StressApp {
 #[cfg(not(target_os = "android"))]
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = StressApp::new();
-    
-    let settings = WindowSettings::new("MoonWalk Stress Test", 1280.0, 720.0)
-        .resizable(true);
-    
-        Runner::run(app, settings)
+    let settings = WindowSettings::new("MoonWalk Stress", 1280.0, 720.0).resizable(true);
+    Runner::run(app, settings)
 }
 
 #[cfg(target_os = "android")]
@@ -143,10 +136,8 @@ fn android_main(app: AndroidApp) {
     android_logger::init_once(
         android_logger::Config::default().with_max_level(LevelFilter::Info)
     );
-
     let stress_app = StressApp::new();
     let settings = WindowSettings::new("MoonWalk Android", 0.0, 0.0);
-    
     Runner::run(stress_app, settings, app).unwrap();
 }
 

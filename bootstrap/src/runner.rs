@@ -1,6 +1,7 @@
 use std::time::Instant;
 use glam::{Vec2, Vec4};
 use moonwalk::MoonWalk;
+use wgpu;
 
 use winit::{
     application::ApplicationHandler,
@@ -12,9 +13,8 @@ use winit::{
 
 #[cfg(target_os = "android")]
 use winit::platform::android::EventLoopBuilderExtAndroid;
-
 #[cfg(target_os = "android")]
-use android_activity::AndroidApp;
+use winit::platform::android::activity::AndroidApp;
 
 use crate::app::Application;
 use crate::window::WindowSettings;
@@ -33,10 +33,6 @@ struct AppRunner<A> {
 
 impl<A: Application> ApplicationHandler for AppRunner<A> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        if self.state.is_some() {
-            return;
-        }
-
         let mut attributes = Window::default_attributes()
             .with_title(&self.settings.title)
             .with_inner_size(LogicalSize::new(self.settings.initial_size.x, self.settings.initial_size.y))
@@ -48,14 +44,23 @@ impl<A: Application> ApplicationHandler for AppRunner<A> {
             attributes = attributes.with_min_inner_size(LogicalSize::new(min.x, min.y));
         }
         
-        if let Some(max) = self.settings.max_size {
-            attributes = attributes.with_max_inner_size(LogicalSize::new(max.x, max.y));
-        }
-
-        let window = event_loop.create_window(attributes).expect("Failed to create window");
+        let window = event_loop.create_window(attributes)
+            .expect("Failed to create window");
         let static_window: &'static Window = Box::leak(Box::new(window));
 
         let initial_size = static_window.inner_size();
+        let scale_factor = static_window.scale_factor();
+        let logical_size = initial_size.to_logical::<f32>(scale_factor);
+
+        if let Some(state) = &mut self.state {
+            state.window = static_window;
+            state.moonwalk.recreate_surface(static_window, initial_size.width, initial_size.height);
+            state.moonwalk.set_viewport(initial_size.width, initial_size.height);
+            state.moonwalk.set_scale_factor(scale_factor as f32); 
+            self.app.on_resize(&mut state.moonwalk, Vec2::new(logical_size.width, logical_size.height));
+            
+            return;
+        }
 
         let mut moonwalk = MoonWalk::new(
             static_window, 
@@ -63,10 +68,8 @@ impl<A: Application> ApplicationHandler for AppRunner<A> {
             initial_size.height
         ).expect("Failed to init MoonWalk");
         
-        let scale_factor = static_window.scale_factor();
-        let logical_size = initial_size.to_logical::<f32>(scale_factor);
-        
         moonwalk.set_viewport(initial_size.width, initial_size.height);
+        moonwalk.set_scale_factor(scale_factor as f32); 
 
         self.app.on_start(&mut moonwalk, Vec2::new(logical_size.width, logical_size.height));
 
@@ -75,6 +78,10 @@ impl<A: Application> ApplicationHandler for AppRunner<A> {
             moonwalk,
             last_frame_time: Instant::now(),
         });
+    }
+
+    fn suspended(&mut self, _event_loop: &ActiveEventLoop) {
+        self.state = None;
     }
 
     fn window_event(&mut self, event_loop: &ActiveEventLoop, _window_id: WindowId, event: WindowEvent) {
@@ -108,8 +115,26 @@ impl<A: Application> ApplicationHandler for AppRunner<A> {
                 self.app.on_update(delta_time);
                 self.app.on_draw(&mut state.moonwalk);
                 
-                if let Err(e) = state.moonwalk.render_frame(Vec4::new(0.1, 0.1, 0.1, 1.0)) {
-                    eprintln!("Render error: {}", e);
+                match state.moonwalk.render_frame(Vec4::new(0.02, 0.02, 0.05, 1.0)) {
+                    Ok(_) => {},
+                    
+                    Err(wgpu::SurfaceError::Lost) => {
+                        let size = state.window.inner_size();
+                        if size.width > 0 && size.height > 0 {
+                            state.moonwalk.recreate_surface(
+                                state.window, 
+                                size.width, 
+                                size.height
+                            );
+                        }
+                    },
+                    
+                    Err(wgpu::SurfaceError::OutOfMemory) => {
+                        eprintln!("Out of memory!");
+                        event_loop.exit();
+                    },
+                    
+                    Err(e) => eprintln!("Render error: {}", e),
                 }
             },
 

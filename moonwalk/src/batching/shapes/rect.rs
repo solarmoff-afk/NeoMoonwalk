@@ -33,7 +33,7 @@ impl RectBatch {
 
         self.cpu_instances.clear();
         
-        for (i, &global_id) in store.rect_ids.iter().enumerate() {
+        for &global_id in store.rect_ids.iter() {
             let idx = global_id.index();
 
             self.cpu_instances.push(RectInstance {
@@ -48,7 +48,7 @@ impl RectBatch {
 
                 color: store.colors[idx].to_array(),
                 
-                radii: store.rect_radii[i].to_array(),
+                radii: store.rect_radii[idx].to_array(),
                 
                 // Упаковываем z индекс, вращение и отсупы
                 extra: [

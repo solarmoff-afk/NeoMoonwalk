@@ -1,7 +1,7 @@
 // MoonWalk это высокопроизводительный движок основанный на WGPU и предназначенный для
-// рендеринга пользовательского интерфейса и игровых 2D сцен. MoonWalk распостраняется
+// рендеринга пользовательского интерфейса и игровых 2D сцен. MoonWalk распространяется
 // свободно под лицензией EPL 2.0 (Eclipse public license). Подробнее про лицензию
-// сказано в файле LICENSE (Корень репозитория). Copyleft 2025, UpdateDeveloper.
+// сказано в файле LICENSE (Корень репозитория). Copyright 2025, UpdateDeveloper.
 //
 // Данный файл предоставляет публичный API рендер движка (В том числе и FFI) для
 // использования в других проектах. В этом файле не должна содержаться какая-либо
@@ -53,7 +53,7 @@ impl MoonWalk {
         Ok(Self { renderer })
     }
 
-    /// Функция чтобы установить пазмер viewport'а (Область, куда идёт рисование)
+    /// Функция чтобы установить размер viewport'а (Область, куда идёт рисование)
     /// Если пользователь вашего приложения изменит размер окна (Через оконный менеджер) 
     /// то область рисования не уменьшится и не увеличиться.
     /// Решение: слушать событие изменения размеров окна и вызывать mw.set_viewport
@@ -62,8 +62,15 @@ impl MoonWalk {
         self.renderer.resize(width, height);
     }
 
+    /// Scale Factor нужно взять у winit либо другой библиотеки
+    /// он необходим чтобы преобразовать логические размеры окна
+    /// в физические (Иначе полноэкранного режима не будет на телефонах)
+    pub fn set_scale_factor(&mut self, scale: f32) {
+        self.renderer.set_scale_factor(scale);
+    }
+
     /// Функция для рендеринга всех элементов которые накопил движок.
-    /// Вызывать нужно КАЖДЫЙ КАДР, но не делать этого в бесконечеом
+    /// Вызывать нужно КАЖДЫЙ КАДР, но не делать этого в бесконечном
     /// цикле (While/loop). Вместо этого лучше использовать встроенное
     /// событие в библиотеку для работы с окнами. Пример для winit:
     /// WindowEvent::RedrawRequested => { ... }
@@ -88,20 +95,20 @@ impl MoonWalk {
     /// (Структура ObjectId которую можно получить вызвав new_* функцию)
     /// принимает ID объекта и структуру Vec2 для описания 2D позиции
     /// в мировой системе координат, (0, 0) это верхний левый угол.
-    pub fn config_position(&mut self, id: ObjectId, pos: Vec2) {
+    pub fn set_position(&mut self, id: ObjectId, pos: Vec2) {
         self.renderer.config_position(id, pos);
     }
 
     /// Функция для изменения размер любого объекта по его ID
     /// (Структура ObjectId которую можно получить вызвав new_* функцию)
     /// принимает ID объекта и структуру Vec2 для описания ширины и высоты.
-    pub fn config_size(&mut self, id: ObjectId, size: Vec2) {
+    pub fn set_size(&mut self, id: ObjectId, size: Vec2) {
         self.renderer.config_size(id, size);
     }
 
     /// Функция для конфигурации угла вращения. Принимает ID объекта
     /// и f32 в качестве угла. ИСПОЛЬЗУЕТ РАДИАНЫ, А НЕ ГРАДУСЫ!
-    pub fn config_rotation(&mut self, id: ObjectId, radians: f32) {
+    pub fn set_rotation(&mut self, id: ObjectId, radians: f32) {
         self.renderer.config_rotation(id, radians);
     }
 
@@ -115,7 +122,7 @@ impl MoonWalk {
     ///
     /// Прозрачность 0 это объект не видно, 1 полностью видно,
     /// 0.5 это полупрозрачный
-    pub fn config_color(&mut self, id: ObjectId, color: Vec4) {
+    pub fn set_color(&mut self, id: ObjectId, color: Vec4) {
         self.renderer.config_color(id, color);
     }
 
@@ -158,5 +165,12 @@ impl MoonWalk {
     /// Принимает Id объекта и z индекс (флоат, может быть отрицательным) 
     pub fn set_z_index(&mut self, id: ObjectId, z: f32) {
         self.renderer.set_z_index(id, z);
+    }
+
+    /// Эта функция пересоздаёт холст для рендеринга. На android
+    /// при сворачивании приложение старый холст удаляется поэтому
+    /// нам нужен новый.
+    pub fn recreate_surface(&mut self, window: &'static (impl HasWindowHandle + HasDisplayHandle + Send + Sync), width: u32, height: u32) {
+        self.renderer.recreate_surface(window, width, height);
     }
 }

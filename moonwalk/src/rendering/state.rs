@@ -72,8 +72,8 @@ impl RenderState {
 
     /// Функция для обновления матрицы проекции. Вызывается при изменении размера
     /// окна через вьюпорт функцию из renderer (А она вызывается из публичного API)
-    pub fn update_projection(&mut self, ctx: &Context, width: u32, height: u32) {
-        self.matrix_stack.set_ortho(width as f32, height as f32);
+    pub fn update_projection(&mut self, ctx: &Context, width: f32, height: f32) {
+        self.matrix_stack.set_ortho(width, height);
         
         let uniform_data = GlobalUniform {
             view_proj: self.matrix_stack.projection.to_cols_array_2d(),

@@ -58,7 +58,8 @@ impl ObjectStore {
         self.colors.push(Vec4::ONE); // Цвет белый (1, 1, 1, 1)
         self.rotations.push(0.0); // Вращение: 0.0 радиан
         self.z_indices.push(0.0); // Нулевой z индекс
-        
+        self.rect_radii.push(Vec4::ZERO); 
+
         // После создания объекта нам нужно пересобрать всё, поэтому
         // делаем хранилище грязным
         self.dirty = true;
@@ -75,7 +76,7 @@ impl ObjectStore {
         self.rect_ids.push(objects::ObjectId(id));
         
         // Нулевое скруглением углов
-        self.rect_radii.push(Vec4::ZERO);
+        self.rect_ids.push(objects::ObjectId(id));
         
         objects::ObjectId(id)
     }
@@ -115,10 +116,9 @@ impl ObjectStore {
     }
 
     pub fn set_rounded(&mut self, id: ObjectId, radii: Vec4) {
-        // Тут нужен поиск, так как radii специфичный
-        if let Some(idx) = self.rect_ids.iter().position(|&x| x == id) {
-            self.rect_radii[idx] = radii;
-            self.dirty = true;
+        if id.index() < self.rect_radii.len() {
+             self.rect_radii[id.index()] = radii;
+             self.dirty = true;
         }
     }
 }
