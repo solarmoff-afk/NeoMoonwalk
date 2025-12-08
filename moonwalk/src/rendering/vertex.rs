@@ -3,6 +3,8 @@
 
 use bytemuck::{Pod, Zeroable};
 
+use crate::batching::common::SortableInstance; 
+
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Pod, Zeroable)]
 pub struct QuadVertex {
@@ -49,5 +51,11 @@ impl RectInstance {
         
         // r это младший байт, нужно для WGPU
         (a << 24) | (b << 16) | (g << 8) | r
+    }
+}
+
+impl SortableInstance for RectInstance {
+    fn get_z_index(&self) -> f32 {
+        self.extra[0]
     }
 }

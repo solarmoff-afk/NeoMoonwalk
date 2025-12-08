@@ -5,12 +5,12 @@ use easy_gpu::{Buffer, Context, RenderPass};
 
 use crate::rendering::vertex::{QuadVertex, RectInstance};
 use crate::objects::store::ObjectStore;
+use crate::batching::common::BatchBuffer;
 
 pub struct RectBatch {
     static_vbo: Buffer<QuadVertex>,
     static_ibo: Buffer<u32>,
-    instance_buffer: Option<Buffer<RectInstance>>,
-    cpu_instances: Vec<RectInstance>,
+    batch: BatchBuffer<RectInstance>,
 }
 
 impl RectBatch {
@@ -21,8 +21,7 @@ impl RectBatch {
         Self {
             static_vbo,
             static_ibo,
-            instance_buffer: None,
-            cpu_instances: Vec::with_capacity(1024),
+            batch: BatchBuffer::new(),
         }
     }
 
@@ -31,12 +30,12 @@ impl RectBatch {
             return;
         }
 
-        self.cpu_instances.clear();
+        self.batch.clear();
         
         for &global_id in store.rect_ids.iter() {
             let idx = global_id.index();
 
-            self.cpu_instances.push(RectInstance {
+            self.batch.push(RectInstance {
                 // Упаковываем позицию и размер в один вектор
                 // для оптимизации
                 pos_size: [
@@ -61,25 +60,15 @@ impl RectBatch {
         // Сортировка объектов по Z идексу толкьо если Z индексы
         // грязные (Проверяем флаг в хранилище объектов) 
         if store.z_dirty { 
-            self.cpu_instances.sort_unstable_by(|a, b| {
-                a.extra[0].total_cmp(&b.extra[0])
-            });
+            self.batch.sort();
         }
 
-        if self.cpu_instances.is_empty() {
-            return;
-        }
-
-        if let Some(buf) = &mut self.instance_buffer {
-            buf.update(ctx, &self.cpu_instances);
-        } else {
-            self.instance_buffer = Some(Buffer::vertex(ctx, &self.cpu_instances));
-        }
+        self.batch.upload(ctx);
     }
 
     pub fn render<'a>(&'a self, pass: &mut RenderPass<'a>) {
-        if let Some(inst_buf) = &self.instance_buffer {
-            let count = self.cpu_instances.len() as u32;
+        if let Some(inst_buf) = &self.batch.gpu_buffer {
+            let count = self.batch.cpu_buffer.len() as u32;
             
             if count > 0 {
                 pass.set_vertex_buffer(0, &self.static_vbo);
