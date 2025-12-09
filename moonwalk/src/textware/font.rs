@@ -3,6 +3,7 @@
 
 use std::collections::HashMap;
 use std::path::Path;
+use std::ffi::CString;
 
 use crate::textware::TextError;
 
@@ -44,8 +45,12 @@ impl FontSystem {
         let font_data = {
             #[cfg(target_os = "android")]
             {
-                let mut asset = self.asset_manager.open(Path::new(path))
+                let c_path = CString::new(path)
+                    .map_err(|e| TextError::FontLoading(format!("Path contains null byte: {}", e)))?;
+
+                let mut asset = self.asset_manager.open(&c_path)
                     .ok_or_else(|| TextError::FontLoading(format!("Asset not found: {}", path)))?;
+                
                 asset.buffer().map(|b| b.to_vec())
                     .map_err(|e| TextError::FontLoading(e.to_string()))
             }
