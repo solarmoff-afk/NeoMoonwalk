@@ -1,8 +1,7 @@
 // Часть проекта MoonWalk с открытым исходным кодом.
 // Лицензия EPL 2.0, подробнее в файле LICENSE. UpdateDeveloper, 2025
 
-use easy_gpu::Context;
-
+use crate::easy_gpu::Context;
 use crate::batching::shapes::rect::RectBatch;
 use crate::objects::store::ObjectStore;
 

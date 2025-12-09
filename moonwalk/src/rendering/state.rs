@@ -1,9 +1,9 @@
 // Часть проекта MoonWalk с открытым исходным кодом.
 // Лицензия EPL 2.0, подробнее в файле LICENSE. UpdateDeveloper, 2025
 
-use easy_gpu::{Context, Buffer, MatrixStack};
 use bytemuck::{Pod, Zeroable};
 
+use crate::easy_gpu::{Context, Buffer, MatrixStack, RenderPass};
 use crate::batching::group::BatchGroup;
 use crate::rendering::pipeline::ShaderStore;
 use crate::objects::store::ObjectStore;
@@ -100,7 +100,7 @@ impl RenderState {
         }
 
         // Создаём проход рендера
-        let mut pass = easy_gpu::RenderPass::new(
+        let mut pass = RenderPass::new(
             encoder,
             target,
             

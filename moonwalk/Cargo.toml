@@ -18,7 +18,6 @@ raw-window-handle = "0.6"
 wgpu = "24.0"
 cosmic-text = "0.11"
 swash = "0.1"
-easy-gpu = { git = "https://github.com/solarmoff-afk/easy-gpu" }
 
 [target.'cfg(target_os = "android")'.dependencies]
 ndk = "0.8"

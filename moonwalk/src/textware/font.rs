@@ -45,6 +45,8 @@ impl FontSystem {
         let font_data = {
             #[cfg(target_os = "android")]
             {
+                // Создание C строки поскольку крейт ndk это обёртка над c кодом, а там
+                // строки отличаются от растовских 
                 let c_path = CString::new(path)
                     .map_err(|e| TextError::FontLoading(format!("Path contains null byte: {}", e)))?;
 

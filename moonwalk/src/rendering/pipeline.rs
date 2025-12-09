@@ -2,8 +2,8 @@
 // Лицензия EPL 2.0, подробнее в файле LICENSE. UpdateDeveloper, 2025
 
 use std::collections::HashMap;
-use easy_gpu::{Context, Pipeline, PipelineBuilder};
 
+use crate::easy_gpu::{Context, Pipeline, PipelineBuilder};
 use crate::objects::ShaderId;
 use crate::error::MoonWalkError;
 

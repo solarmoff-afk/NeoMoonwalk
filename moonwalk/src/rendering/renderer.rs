@@ -3,9 +3,9 @@
 
 use std::sync::Arc;
 use raw_window_handle::{HasDisplayHandle, HasWindowHandle};
-use easy_gpu::Context;
 use glam::{Vec2, Vec4};
 
+use crate::easy_gpu::Context;
 use crate::error::MoonWalkError;
 use crate::rendering::state::RenderState;
 use crate::objects::ObjectId;

@@ -1,7 +1,7 @@
 // Часть проекта MoonWalk с открытым исходным кодом.
 // Лицензия EPL 2.0, подробнее в файле LICENSE. UpdateDeveloper, 2025
 
-use easy_gpu::{Context, RenderPass};
+use crate::easy_gpu::{Context, RenderPass};
 use crate::objects::store::ObjectStore;
 
 /// Интерфейс который обязан реализовать любой модуль батчинга 

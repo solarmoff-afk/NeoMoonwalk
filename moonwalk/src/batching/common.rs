@@ -2,7 +2,8 @@
 // Лицензия EPL 2.0, подробнее в файле LICENSE. UpdateDeveloper, 2025
 
 use bytemuck::{Pod, Zeroable};
-use easy_gpu::{Buffer, Context};
+
+use crate::easy_gpu::{Buffer, Context};
 
 /// Трейт, который должна реализовать любая структура инстанса
 /// чтобы её можно было сортировать

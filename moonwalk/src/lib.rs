@@ -14,6 +14,7 @@ mod rendering;
 mod objects;
 mod batching;
 mod textware;
+mod easy_gpu;
 
 use raw_window_handle::{HasDisplayHandle, HasWindowHandle};
 use glam::{Vec2, Vec4};
