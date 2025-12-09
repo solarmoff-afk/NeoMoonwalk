@@ -5,8 +5,8 @@ use glam::{Vec2, Vec4};
 #[cfg(target_os = "android")]
 use log::LevelFilter;
 
-const RECT_COUNT: usize = 5_000; 
-const RECT_SIZE: f32 = 32.0;
+const RECT_COUNT: usize = 700_000; 
+const RECT_SIZE: f32 = 1.0;
 const SPEED_BASE: f32 = 150.0;
 
 struct Bouncer {

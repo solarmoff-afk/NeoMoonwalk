@@ -13,13 +13,14 @@ pub mod error;
 mod rendering;
 mod objects;
 mod batching;
+mod textware;
 
 use raw_window_handle::{HasDisplayHandle, HasWindowHandle};
 use glam::{Vec2, Vec4};
 use wgpu::SurfaceError;
 
-use crate::rendering::renderer::MoonRenderer;
 pub use crate::objects::ObjectId;
+use crate::rendering::renderer::MoonRenderer;
 
 /// Основная структура движка которая содержит рендерер. Конструктор new
 /// принимает окно (Которое можно получить через winit), ширину окна и
