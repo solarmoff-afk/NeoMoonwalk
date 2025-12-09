@@ -1,7 +1,6 @@
 // Часть проекта MoonWalk с открытым исходным кодом.
-// Лицензия EPL 2.0, подробнее в файле LICENSE. UpdateDeveloper, 2025
+// Лицензия EPL 2.0, подробнее в файле LICENSE. Copyright (c) 2025 MoonWalk
 
-pub mod context;
 pub mod buffer;
 pub mod texture;
 pub mod pipeline;
